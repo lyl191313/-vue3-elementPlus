@@ -1,21 +1,12 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Dashboard from '../views/Dashboard/Dashboard.vue'
-
-const routes = [
-  {
-    path: '/',
-    redirect:'/login',
-  },
-  {
-    path: "/login",
-    name: "login",
-    component: () => import(/* webpackChunkName: "errors-404" */ "../views/auth/Login.vue")
-  },
+const asyncRoute = [
   {
     path: "/index",
     name: 'Dashboard',
     component: Dashboard,
-    // redirect:'/about',
+    icon: "el-icon-s-home",
+    redirect:'/workbench',
     children:[
       {
         path: '/workbench',
@@ -33,7 +24,8 @@ const routes = [
     path: "/formPage",
     name: '表单页',
     component: Dashboard,
-    // redirect:'/about',
+    icon: "el-icon-edit-outline",
+    redirect:'/baseForm',
     children:[
       {
         path: '/baseForm',
@@ -52,6 +44,18 @@ const routes = [
       }
     ],
   },
+]
+const routes = [
+  {
+    path: '/',
+    redirect:'/login',
+  },
+  {
+    path: "/login",
+    name: "login",
+    component: () => import(/* webpackChunkName: "errors-404" */ "../views/auth/Login.vue")
+  },
+  
   {
     path: "/:pathMatch(.*)*",
     name:'404',
@@ -60,7 +64,7 @@ const routes = [
   
 
   
-]
+].concat(asyncRoute)
 const router = createRouter({
   history: createWebHistory(process.env.BASE_URL),
   routes
@@ -71,7 +75,10 @@ const getToken = ()=>{
 const deleteToken = ()=>{
   return localStorage.removeItem('token')
 }
+
+
 router.beforeEach((to, from, next) => {
+
   if (to.name !== 'login' && !getToken()) {next('/login')} // 如果用户不是访问登录页且没有登录，则强制跳转到登录页
   else if(to.name === 'login' && getToken()){
     deleteToken()
@@ -80,3 +87,4 @@ router.beforeEach((to, from, next) => {
   {  next()}
 })
 export default router
+export { asyncRoute }

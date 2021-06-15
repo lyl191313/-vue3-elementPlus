@@ -1,6 +1,8 @@
 <template>
   <div>
-    分布表单
+    <Card>
+      分布表单
+    </Card>
   </div>
 </template>
 

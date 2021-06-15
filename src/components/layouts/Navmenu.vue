@@ -3,7 +3,7 @@
     <el-col :span="24">
       <el-menu
         :uniqueOpened="true"
-        :default-active="defaultActive"
+        :default-active="$route.path"
         class="el-menu-vertical-demo"
         @open="handleOpen"
         @close="handleClose"
@@ -12,6 +12,7 @@
         text-color="#fff"
         active-text-color="#ffd04b"
         :collapse="isCollapse()"
+        router
       >
         <el-row class="navmenu-head">
           <img
@@ -35,33 +36,32 @@
         <el-row class="navmenu-title" v-if="!isCollapse()">
           MAIN NAVIGATION
         </el-row>
-        <el-submenu
-          :index="i.toString()"
-          v-for="(item, i) in routerList"
-          :key="item"
-        >
+        <el-submenu :index="item.path" v-for="(item, i) in asyncRoute" :key="i">
           <template #title>
             <i
               :class="item.icon"
               :style="{
-                color: Active == i ? 'rgb(255, 208, 75)' : 'rgb(255, 255, 255)'
+                color:
+                  item.path == Active
+                    ? 'rgb(255, 208, 75)'
+                    : 'rgb(255, 255, 255)'
               }"
             ></i>
             <span
               :style="{
-                color: Active == i ? 'rgb(255, 208, 75)' : 'rgb(255, 255, 255)'
+                color:
+                  item.path == Active
+                    ? 'rgb(255, 208, 75)'
+                    : 'rgb(255, 255, 255)'
               }"
-              >{{ item.menu.name }}</span
+              >{{ item.name }}</span
             >
           </template>
-          <el-menu-item-group
-            v-for="(childrenitem, k) in item.children"
-            :key="k"
-          >
-            <el-menu-item :index="i.toString() + '-' + k.toString()">{{
+          <el-item-group v-for="(childrenitem, k) in item.children" :key="k">
+            <el-menu-item :index="childrenitem.path">{{
               childrenitem.name
             }}</el-menu-item>
-          </el-menu-item-group>
+          </el-item-group>
         </el-submenu>
       </el-menu>
     </el-col>
@@ -72,73 +72,39 @@
 import { defineComponent, ref, computed, getCurrentInstance } from "vue";
 import { mapState, mapGetters, mapActions, mapMutations, useStore } from "vuex";
 import { useRouter } from "vue-router";
-
+import { asyncRoute } from "../../router/index";
 export default {
   setup() {
-    // 默认激活
-    const defaultActive = ref("0-0");
     // 菜单激活
-    const Active = ref("0");
+    const Active = ref("");
     const store = useStore();
     const value = ref(true);
     const router = useRouter();
     const { proxy } = getCurrentInstance();
-    const routerList = ref([
-      {
-        icon: "el-icon-s-home",
-        menu: { name: "Dashboard", path: "/index" },
-        children: [
-          { name: "工作台", path: "/workbench" },
-          { name: "分析页", path: "/analysis" }
-        ]
-      },
-      {
-        icon: "el-icon-edit-outline",
-        menu: { name: "表单页", path: "/formPage" },
-        children: [
-          { name: "基础表单", path: "/baseForm" },
-          { name: "分布表单", path: "/distributionForm" },
-          { name: "高级表单", path: "/advancedForm" }
-        ]
+    const resetActiveRoute = newPath => {
+      if (newPath) {
+        Active.value = newPath;
+      } else {
+        Active.value = proxy.$route.matched[0].path;
       }
+    };
+    resetActiveRoute();
 
-      // {
-      //   icon: "el-icon-s-grid",
-      //   name: "列表页",
-      //   children: ["查询表格", "标准列表", "卡片列表", "搜索列表"]
-      // },
-      // {
-      //   icon: "el-icon-document",
-      //   name: "详情页",
-      //   children: ["基础详情页", "高级详情页"]
-      // },
-      // {
-      //   icon: "el-icon-success",
-      //   name: "结果页",
-      //   children: ["成功", "失败"]
-      // }
-    ]);
     // 打开菜单
     const handleOpen = (key, keyPath) => {
-      let selectKey = "";
-      let selectKeypathArr = [];
-      Active.value = key.toString();
-      defaultActive.value = key.toString() + "-" + "0";
-      selectKeypathArr.push(key);
-      selectKey = key + "-" + "0";
-      selectKeypathArr.push(selectKey);
-      select(selectKey, selectKeypathArr);
-      // console.log(key, keyPath);
+      resetActiveRoute(key);
+      proxy.$router.replace(key);
     };
     // 关闭菜单
     const handleClose = (key, keyPath) => {
-      Active.value = "-1";
-      // console.log(key, keyPath);
+      Active.value = "";
+      console.log(2, key, keyPath);
     };
     // 用于判断菜单栏折叠状态
     const isCollapse = computed(() => ({
       ...mapState(["isCollapse"])
     })).value.isCollapse.bind({ $store: store });
+
     // 更改菜单栏收起展开
     const changeCollapse = computed(() => ({
       ...mapMutations(["changeCollapse"])
@@ -149,29 +115,17 @@ export default {
     })).value.setBreadCrumb.bind({ $store: store });
     // 选择选项
     const select = (index, indexPath) => {
-      Active.value = indexPath[0];
-      console.log(index, indexPath);
-      let navList = new Array();
-      let catalogue = routerList.value[+indexPath[1].split("-")[0]].menu;
-      navList.push(catalogue);
-      let subdirectory =
-        routerList.value[+indexPath[1].split("-")[0]].children[
-          +indexPath[1].split("-")[1]
-        ];
-      navList.push(subdirectory);
-      setBreadCrumb(navList);
-      proxy.$router.push(subdirectory.path);
+      console.log(3, index, indexPath);
     };
-    handleOpen("0", ["0"]);
 
     return {
-      defaultActive,
+      asyncRoute,
       Active,
       store,
       value,
       router,
       proxy,
-      routerList,
+      resetActiveRoute,
       handleOpen,
       handleClose,
       isCollapse,
@@ -193,20 +147,18 @@ export default {
   height: 100% !important;
 }
 .el-menu-item {
-  //   min-width: 200px !important;
-  //   max-width: 200px;
+  // min-width: 200px !important;
+  // max-width: 200px;
 }
 .el-menu--collapse {
   border: none !important;
 }
 .navmenu-head {
-  width: 100%;
+  // width: 100%;
   height: 58px;
-  transition: width 0.39s ease;
+  transition: width 0.4s ease-in-out;
   color: #fff;
-  //   display: flex;
-  //   justify-content: space-between;
-  //   align-items: center;
+
   .head-portrait {
     width: 40px;
     height: 40px;
@@ -225,7 +177,7 @@ export default {
     flex-direction: column;
     align-items: flex-start;
     justify-content: center;
-    padding-left: 12px;
+    padding-left: 24px;
     .online-status {
       margin-top: 5px;
       font-size: 14px;
@@ -242,6 +194,10 @@ export default {
       }
     }
   }
+}
+.el-menu-vertical-demo:not(.el-menu--collapse) {
+  width: 200px; //宽度自己掌握
+  height: 100%;
 }
 .navmenu-search {
   width: 100%;

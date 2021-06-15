@@ -1,6 +1,8 @@
 <template>
   <div>
-    高级表单
+    <Card>
+      高级表单
+    </Card>
   </div>
 </template>
 

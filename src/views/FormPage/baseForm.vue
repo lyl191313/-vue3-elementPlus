@@ -1,6 +1,8 @@
 <template>
   <div>
-    基础表单
+    <Card>
+      基础表单
+    </Card>
   </div>
 </template>
 

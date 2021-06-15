@@ -1,13 +1,13 @@
 <template>
   <div id="breadcrumb">
     <div class="breadcrumb-left-title">
-      {{ routerName.name }}
+      {{ routerName.matched[0].name }}
     </div>
     <el-breadcrumb separator="/">
       <el-breadcrumb-item :to="{ path: '/index' }">首页</el-breadcrumb-item>
       <el-breadcrumb-item
         :to="{ path: item.path }"
-        v-for="(item, i) in breadCrumb()"
+        v-for="(item, i) in routerName.matched"
         :key="i"
         >{{ item.name }}
       </el-breadcrumb-item>
@@ -16,27 +16,24 @@
 </template>
 
 <script>
-import { defineComponent, ref, computed } from "vue";
+import { defineComponent, ref, computed, getCurrentInstance } from "vue";
 import { mapState, mapGetters, mapActions, mapMutations, useStore } from "vuex";
 export default {
   setup() {
     const store = useStore();
+    const { proxy } = getCurrentInstance();
 
-    const breadCrumb = computed(() => ({
-      ...mapState(["breadCrumb"])
-    })).value.breadCrumb.bind({ $store: store });
     // 更改菜单栏收起展开
     const changeCollapse = computed(() => ({
       ...mapMutations(["changeCollapse"])
     })).value.changeCollapse.bind({ $store: store });
-    // 当前路由名
+    // 当前路由信息
     const routerName = computed(() => {
-      let index = breadCrumb().length - 1;
-      return breadCrumb()[index];
+      return proxy.$route;
     });
-    console.log(22132, breadCrumb());
+
     return {
-      breadCrumb,
+      proxy,
       routerName,
       store,
       changeCollapse

@@ -9,9 +9,11 @@
 
 <script>
 import { post } from "../../network/request";
-import { ref } from "vue";
+import { ref, getCurrentInstance } from "vue";
+
 export default {
   setup() {
+    const { proxy } = getCurrentInstance();
     const testData = ref(null);
     const requestData = () => {
       post("/users", {})
@@ -25,6 +27,7 @@ export default {
         });
     };
     return {
+      proxy,
       testData,
       requestData
     };

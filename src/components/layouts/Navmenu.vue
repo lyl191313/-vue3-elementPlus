@@ -30,8 +30,8 @@
           </div>
         </el-row>
         <el-row class="navmenu-search" v-if="!isCollapse()">
-          <input type="text" placeholder="Search..." />
-          <i class="el-icon-search"></i>
+          <input type="text" placeholder="Search..." v-model="searchValue" />
+          <i class="el-icon-search" @click="searchMenu()"></i>
         </el-row>
         <el-row class="navmenu-title" v-if="!isCollapse()">
           MAIN NAVIGATION
@@ -73,6 +73,7 @@ import { defineComponent, ref, computed, getCurrentInstance } from "vue";
 import { mapState, mapGetters, mapActions, mapMutations, useStore } from "vuex";
 import { useRouter } from "vue-router";
 import { asyncRoute } from "../../router/index";
+import testVue from "../../views/FormPage/test.vue";
 export default {
   setup() {
     // 菜单激活
@@ -80,6 +81,14 @@ export default {
     const store = useStore();
     const value = ref(true);
     const router = useRouter();
+    const searchValue = ref("");
+    const testArr = ref([
+      "工作台",
+      "分析页",
+      "基础表单",
+      "分布表单",
+      "高级表单"
+    ]);
     const { proxy } = getCurrentInstance();
     const resetActiveRoute = newPath => {
       if (newPath) {
@@ -89,7 +98,30 @@ export default {
       }
     };
     resetActiveRoute();
+    //搜索菜单
+    const searchMenu = () => {
+      let arr = [];
+      let arrx = [];
+      asyncRoute.forEach((item, i) => {
+        arr = arr.concat(item.children);
+      });
 
+      for (var i = 0; i < arr.length; i++) {
+        if (arr[i].name.match(searchValue.value) !== null) {
+          arrx.push(arr[i]);
+        }
+      }
+      if ((arrx.length = 1)) {
+        proxy.$router.replace(arrx[0].path);
+
+        //  调转到匹配搜索的地址同时找打对应的菜单并且展开
+        asyncRoute.filter((item, i) => {
+          item.children.find(
+            itemchildren => itemchildren.path == arrx[0].path
+          ) && resetActiveRoute(item.path);
+        });
+      }
+    };
     // 打开菜单
     const handleOpen = (key, keyPath) => {
       resetActiveRoute(key);
@@ -98,7 +130,6 @@ export default {
     // 关闭菜单
     const handleClose = (key, keyPath) => {
       Active.value = "";
-      console.log(2, key, keyPath);
     };
     // 用于判断菜单栏折叠状态
     const isCollapse = computed(() => ({
@@ -114,9 +145,7 @@ export default {
       ...mapMutations(["setBreadCrumb"])
     })).value.setBreadCrumb.bind({ $store: store });
     // 选择选项
-    const select = (index, indexPath) => {
-      console.log(3, index, indexPath);
-    };
+    const select = (index, indexPath) => {};
 
     return {
       asyncRoute,
@@ -124,8 +153,11 @@ export default {
       store,
       value,
       router,
+      searchValue,
+      testArr,
       proxy,
       resetActiveRoute,
+      searchMenu,
       handleOpen,
       handleClose,
       isCollapse,
@@ -214,8 +246,9 @@ export default {
     border: none;
     border-radius: 5px;
     outline: none;
+    padding-left: 10px;
     &::-webkit-input-placeholder {
-      padding-left: 10px;
+      // padding-left: 10px;
       color: #9ba7b0;
     }
   }
